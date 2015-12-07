@@ -17,7 +17,7 @@ module.exports.parseInt = erlnmyr.phase(
 module.exports.generateDOM = erlnmyr.phase(
   {
     input: erlnmyr.types.number,
-    output: erlnmyr.types.JSON,
+    output: erlnmyr.types.string,
     arity: '1:1',
   },
   function(size) {
@@ -31,8 +31,8 @@ module.exports.generateDOM = erlnmyr.phase(
       return items[index];
     };
     var result = domgen(random, size);
-    result.seed = seed;
-    result.size = size;
-    return result;
+    this.tags.tag('seed', seed);
+    this.tags.tag('size', size);
+    return result.dom;
   },
   {seed: null});
