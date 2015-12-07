@@ -1,9 +1,12 @@
 digraph fuzz {
-  imports="['./fuzzer']";
+  imports="['./fuzzer', './style-phases']";
 
-  range -> generateDOM -> log;
+  range -> generateDOM -> dateTag -> trace -> mergeTags -> log -> traceFilter -> jsonStringify -> writeStringFile;
 
-  range [start="100000", end="1000000", step="10000"];
+  range [start="100000", end="1000000", step="100000"];
   generateDOM [seed="42"];
-  log [tags="['size']", justTags="true"];
+  mergeTags [inputs="['date', 'size']", spec="traces/fuzzer/$1-$2.trace", output="filename"];
+  log [tags="['filename']", justTags="true"];
+  traceFilter [traceEvents="['Document::updateStyle']"];
+  writeStringFile [tag="filename"];
 }
