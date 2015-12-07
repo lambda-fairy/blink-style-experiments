@@ -1,8 +1,9 @@
 digraph fuzz {
   imports="['./fuzzer']";
 
-  input -> parseInt -> generateDOM -> log;
+  range -> generateDOM -> log;
 
-  input [data="500"];
+  range [start="100000", end="1000000", step="10000"];
   generateDOM [seed="42"];
+  log [tags="['size']", justTags="true"];
 }

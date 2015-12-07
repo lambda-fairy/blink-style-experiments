@@ -3,6 +3,26 @@ var seedrandom = require('seedrandom');
 
 var domgen = require('./domgen');
 
+module.exports.range = erlnmyr.phase(
+  {
+    input: erlnmyr.types.unit,
+    output: erlnmyr.types.number,
+    arity: '0:N',
+    parallel: 1,
+  },
+  function() {
+    if (this.options.step > 0) {
+      for (var i = this.options.start; i < this.options.end; i += this.options.step) {
+        this.put(i);
+      }
+    } else {
+      for (var i = this.options.start; i > this.options.end; i += this.options.step) {
+        this.put(i);
+      }
+    }
+  },
+  {start: 0, end: 10, step: 1});
+
 module.exports.parseInt = erlnmyr.phase(
   {
     input: erlnmyr.types.string,
