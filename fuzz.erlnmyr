@@ -1,0 +1,8 @@
+digraph fuzz {
+  imports="['./fuzzer']";
+
+  input -> parseInt -> generateDOM -> log;
+
+  input [data="500"];
+  generateDOM [seed="42"];
+}

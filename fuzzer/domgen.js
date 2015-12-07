@@ -72,7 +72,7 @@ module.exports = (function() {
     }
     return next;
   }
-  return function(maxSize) {
+  return function(random, maxSize) {
     if (!maxSize) {
       maxSize = 50000;
     }
@@ -82,18 +82,15 @@ module.exports = (function() {
     var size = nodes[0].size;
     while (size < maxSize) {
       var node;
-      var parent = nodes[Math.floor(Math.random() * nodes.length)];
-      if (Math.random() < 0.4) {
-        node = new TextNode(
-            tagNames[Math.floor(Math.random() * tagNames.length)]);
+      var parent = random.choice(nodes);
+      if (random.double() < 0.4) {
+        node = new TextNode(random.choice(tagNames));
         parent.children.push(node);
       } else {
         var idString = id.toString(36);
         ids.push(idString);
         id = nextId(id);
-        node = new Node(
-            idString,
-            tagNames[Math.floor(Math.random() * tagNames.length)])
+        node = new Node(idString, random.choice(tagNames));
         nodes.push(node);
         parent.children.push(node);
       }
