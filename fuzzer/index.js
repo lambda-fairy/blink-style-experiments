@@ -3,12 +3,20 @@ var seedrandom = require('seedrandom');
 
 var domgen = require('./domgen');
 
+function typeVar(s) {
+  return function(v) {
+    if (!v[s]) {
+      v[s] = erlnmyr.types.newTypeVar();
+    }
+    return v[s];
+  };
+}
+
 module.exports.range = erlnmyr.phase(
   {
     input: erlnmyr.types.unit,
     output: erlnmyr.types.number,
     arity: '0:N',
-    parallel: 1,
   },
   function() {
     if (this.options.step > 0) {
@@ -22,6 +30,19 @@ module.exports.range = erlnmyr.phase(
     }
   },
   {start: 0, end: 10, step: 1});
+
+module.exports.map = erlnmyr.phase(
+  {
+    input: typeVar('a'),
+    output: typeVar('b'),
+    arity: '1:1',
+  },
+  function(it, tags) {
+    if (!this.callback)
+      this.callback = (new Function('it', 'tags', 'return ' + this.options.expr)).bind(this);
+    return this.callback(it, tags);
+  },
+  {expr: 'it'});
 
 module.exports.parseInt = erlnmyr.phase(
   {
