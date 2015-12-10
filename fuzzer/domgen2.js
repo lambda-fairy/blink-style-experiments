@@ -63,8 +63,14 @@ function max(items) {
 
 Node.prototype._gatherStatisticsHelper = function(state) {
   ++state.nodeCount;
-  state.allChildCounts.push(this.children.length);
-  state.allDepths.push(state.currentDepth);
+  if (this.children.length > 0) {
+    // Only count the number of children if there are children to count
+    // Since most nodes are leaf nodes, counting them would sway the average too much
+    state.allBranchFactors.push(this.children.length);
+  } else {
+    // Only count the depth of leaf nodes
+    state.allDepths.push(state.currentDepth);
+  }
   for (child of this.children) {
     ++state.currentDepth;
     child._gatherStatisticsHelper(state);
