@@ -96,7 +96,7 @@ module.exports.generateDOM2 = erlnmyr.phase(
     for (var i = 0; i < n; ++i) {
       var result = generator.generateNode();
       var stats = result.gatherStatistics();
-      this.tags.tag('meanChildCount', stats.meanChildCount);
+      this.tags.tag('meanBranchFactor', stats.meanBranchFactor);
       this.tags.tag('meanDepth', stats.meanDepth);
       this.tags.tag('nodeCount', stats.nodeCount);
       this.tags.tag('seed', seed);

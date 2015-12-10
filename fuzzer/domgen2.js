@@ -39,15 +39,15 @@ Node.prototype.render = function(baseIndent, indent) {
 Node.prototype.gatherStatistics = function() {
   var state = {
     nodeCount: 0,
-    allChildCounts: [],
+    allBranchFactors: [],
     allDepths: [],
     currentDepth: 0,
   };
   this._gatherStatisticsHelper(state);
   return {
     nodeCount: state.nodeCount,
-    meanChildCount: mean(state.allChildCounts),
-    maxChildCount: max(state.allChildCounts),
+    meanBranchFactor: mean(state.allBranchFactors),
+    maxBranchFactor: max(state.allBranchFactors),
     meanDepth: mean(state.allDepths),
     maxDepth: max(state.allDepths),
   };
