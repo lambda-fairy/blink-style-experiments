@@ -1,0 +1,12 @@
+digraph fuzz {
+  imports="['./fuzzer', './style-phases']";
+  optionAliases="input=input.data";
+
+  input -> parseInt -> generateDOM2 -> log_1 -> dateTag -> trace -> mergeTags -> log_2 -> traceFilter -> jsonStringify -> writeStringFile;
+
+  log_1 [tags="['meanChildCount', 'meanDepth', 'nodeCount']", justTags="true"];
+  mergeTags [inputs="['date', 'meanChildCount', 'meanDepth', 'nodeCount']", spec="traces/fuzz2/$1-$2-$3-$4.trace", output="filename"];
+  log_2 [tags="['filename']", justTags="true"];
+  traceFilter [traceEvents="['Document::updateStyle']"];
+  writeStringFile [tag="filename"];
+}

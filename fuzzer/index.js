@@ -2,6 +2,7 @@ var erlnmyr = require('erlenmeyer');
 var seedrandom = require('seedrandom');
 
 var domgen = require('./domgen');
+var domgen2 = require('./domgen2');
 
 function typeVar(s) {
   return function(v) {
@@ -77,3 +78,29 @@ module.exports.generateDOM = erlnmyr.phase(
     return result.dom;
   },
   {seed: null});
+
+module.exports.generateDOM2 = erlnmyr.phase(
+  {
+    input: erlnmyr.types.number,
+    output: erlnmyr.types.string,
+    arity: '1:N',
+  },
+  function(n) {
+    var seed = +(this.options.seed || process.hrtime()[1]);
+    if (!this.branchiness) this.branchiness = new Function('width', 'return ' + this.options.branchiness);
+    if (!this.depthicity) this.depthicity = new Function('depth', 'return ' + this.options.depthicity);
+    // The Alea algorithm is fastest
+    var rng = seedrandom.alea(seed);
+    var random = rng.double.bind(rng);
+    var generator = new domgen2.DOMGenerator(random, this.branchiness, this.depthicity);
+    for (var i = 0; i < n; ++i) {
+      var result = generator.generateNode();
+      var stats = result.gatherStatistics();
+      this.tags.tag('meanChildCount', stats.meanChildCount);
+      this.tags.tag('meanDepth', stats.meanDepth);
+      this.tags.tag('nodeCount', stats.nodeCount);
+      this.tags.tag('seed', seed);
+      this.put(result.render());
+    }
+  },
+  {seed: null, branchiness: '1 - width/10', depthicity: '1 - depth/10'});
