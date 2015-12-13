@@ -1,5 +1,5 @@
 digraph fuzz {
-  imports="['./fuzzer', './style-phases']";
+  imports="['./fuzz', './style-phases']";
 
   range -> map -> generateDOM -> dateTag -> trace -> mergeTags -> log -> traceFilter -> jsonStringify -> writeStringFile;
 

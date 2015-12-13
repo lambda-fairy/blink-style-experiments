@@ -1,11 +1,11 @@
 digraph fuzz {
-  imports="['./fuzzer', './style-phases']";
-  optionAliases="input=input.data, branchiness=generateDOM2.branchiness, depthicity=generateDOM2.depthicity";
+  imports="['./fuzz2', './style-phases']";
+  optionAliases="input=input.data";
 
-  input -> parseInt -> generateDOM2 -> log_1 -> dateTag -> trace -> mergeTags -> log_2 -> traceFilter -> jsonStringify -> writeStringFile;
+  input -> fileToJSON -> makeGenerateDOM2Args -> generateDOM2 -> log_1 -> dateTag -> trace -> mergeTags -> log_2 -> traceFilter -> jsonStringify -> writeStringFile;
 
-  log_1 [tags="['meanBranchFactor', 'meanDepth', 'nodeCount']", justTags="true"];
-  mergeTags [inputs="['date', 'meanBranchFactor', 'meanDepth', 'nodeCount']", spec="traces/fuzz2/$1-$2-$3-$4.trace", output="filename"];
+  log_1 [tags="['branchiness', 'depthicity', 'nodeCount']", justTags="true"];
+  mergeTags [inputs="['date', 'branchiness', 'depthicity', 'nodeCount', 'seed']", spec="traces/fuzz2/$1-$2-$3-$4-$5.trace", output="filename"];
   log_2 [tags="['filename']", justTags="true"];
   traceFilter [traceEvents="['Document::updateStyle']"];
   writeStringFile [tag="filename"];
