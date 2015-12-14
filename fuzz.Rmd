@@ -29,3 +29,35 @@ ggplot(fuzz, aes(x = size, y = Document..updateStyle)) +
   geom_point() +
   geom_smooth(method = 'lm')
 ```
+
+# Branchiness
+
+```{r, echo=FALSE}
+fuzz2.branchiness <- read.csv('fuzz2-branchiness.csv')
+names(fuzz2.branchiness)[names(fuzz2.branchiness) == 'id'] <- 'branchiness'
+```
+
+```{r, echo=FALSE}
+ggplot(fuzz2.branchiness, aes(x = branchiness, y = Document..updateStyle)) +
+  labs(title = "Random DOM fragments by branching factor",
+       x = "Branching factor",
+       y = "Time taken in Document::updateStyle (μs)") +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
+
+# Depthicity
+
+```{r, echo=FALSE}
+fuzz2.depthicity <- read.csv('fuzz2-depthicity.csv')
+names(fuzz2.depthicity)[names(fuzz2.depthicity) == 'id'] <- 'depthicity'
+```
+
+```{r, echo=FALSE}
+ggplot(fuzz2.depthicity, aes(x = depthicity, y = Document..updateStyle)) +
+  labs(title = "Random DOM fragments by tree height",
+       x = "Tree height",
+       y = "Time taken in Document::updateStyle (μs)") +
+  geom_point() +
+  geom_smooth(method = 'lm')
+```
