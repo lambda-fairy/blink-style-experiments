@@ -15,6 +15,15 @@
 var erlnmyr = require('erlenmeyer');
 var seedrandom = require('seedrandom');
 
+function typeVar(s) {
+  return function(v) {
+    if (!v[s]) {
+      v[s] = erlnmyr.types.newTypeVar();
+    }
+    return v[s];
+  };
+}
+
 function makeRandom(seed) {
   var seed = seed || process.hrtime()[1];
   // The Alea algorithm is fastest
@@ -68,6 +77,25 @@ module.exports.generateDOM2 = erlnmyr.phase(
     this.put(result.render());
   },
   {seed: null});
+
+module.exports.extractTags = erlnmyr.phase(
+  {
+    input: typeVar('a'),
+    output: typeVar('a'),
+    arity: '1:1',
+  },
+  function(data, tags) {
+    var input = tags.read(this.options.input);
+    var fragments = input.split('-');
+    for (var i = 0; i < this.options.tags.length; ++i) {
+      tags.tag(this.options.tags[i], fragments[i]);
+    }
+    return data;
+  },
+  {
+    input: 'filename',
+    tags: [],
+  });
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
