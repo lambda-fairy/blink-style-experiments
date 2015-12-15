@@ -30,12 +30,16 @@ ggplot(fuzz, aes(x = size, y = Document..updateStyle)) +
   geom_smooth(method = 'lm')
 ```
 
-# Branchiness
+# Varying branching factor
 
 ```{r, echo=FALSE}
 fuzz2.branchiness <- read.csv('fuzz2-branchiness.csv')
 names(fuzz2.branchiness)[names(fuzz2.branchiness) == 'id'] <- 'branchiness'
 ```
+
+In the next experiment, the HTML fragments had a flat structure with no nesting. `r length(fuzz2.branchiness$branchiness)` samples were collected in total.
+
+As before, the update time increased linearly with the number of nodes.
 
 ```{r, echo=FALSE}
 ggplot(fuzz2.branchiness, aes(x = branchiness, y = Document..updateStyle)) +
@@ -46,12 +50,16 @@ ggplot(fuzz2.branchiness, aes(x = branchiness, y = Document..updateStyle)) +
   geom_smooth(method = 'lm')
 ```
 
-# Depthicity
+# Varying tree height
 
 ```{r, echo=FALSE}
 fuzz2.depthicity <- read.csv('fuzz2-depthicity.csv')
 names(fuzz2.depthicity)[names(fuzz2.depthicity) == 'id'] <- 'depthicity'
 ```
+
+In the final experiment, the fragments had a deeply nested structure. All nodes, except the innermost leaf node, had exactly one child. `r length(fuzz2.depthicity$depthicity)` samples were collected in total.
+
+Again, the growth was linear.
 
 ```{r, echo=FALSE}
 ggplot(fuzz2.depthicity, aes(x = depthicity, y = Document..updateStyle)) +
