@@ -4,8 +4,7 @@ author: "Chris Wong"
 date: "December 16, 2015"
 output:
   html_document:
-  md_document:
-    variant: markdown_github
+    keep_md: yes
 ---
 
 ```{r, echo=FALSE}
