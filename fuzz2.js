@@ -157,6 +157,18 @@ Node.prototype.countNodes = function() {
   return total;
 }
 
+function TextNode(text) {
+  this.text = text;
+}
+
+TextNode.prototype.render = function(baseIndent, indent) {
+  return `${indent}${this.text}`;
+}
+
+TextNode.prototype.countNodes = function() {
+  return 1;
+}
+
 function DOMGenerator(random, branchiness, depthicity) {
   // Random number generator. Returns a random value from the range `[0, 1)`.
   this.random = random;
@@ -175,6 +187,8 @@ DOMGenerator.prototype.generateNode = function(depth) {
       var child = this.generateNode(1 + depth);
       node.children.push(child);
     }
+  } else {
+    node.children.push(new TextNode(tagName));
   }
   return node;
 }
