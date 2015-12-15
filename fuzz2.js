@@ -99,6 +99,7 @@ module.exports.extractTags = erlnmyr.phase(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/*
 var tagNames = [
   'div',
   'pre',
@@ -126,6 +127,7 @@ var tagNames = [
   'style',
   'template',
 ];
+*/
 
 function* generateNames() {
   for (var i = 0; ; ++i) {
@@ -181,7 +183,9 @@ function DOMGenerator(random, branchiness, depthicity) {
 
 DOMGenerator.prototype.generateNode = function(depth) {
   if (typeof depth == 'undefined') depth = 0;
-  var node = new Node('div', this.ids.next().value);
+  // var tagName = tagNames[Math.floor(this.random() * tagNames.length)];
+  var tagName = 'div';
+  var node = new Node(tagName, this.ids.next().value);
   if (depth < this.depthicity) {
     for (var width = 0; width < this.branchiness; ++width) {
       var child = this.generateNode(1 + depth);
