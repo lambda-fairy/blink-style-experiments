@@ -1,5 +1,5 @@
 digraph fuzz {
-  imports="['./fuzz2', './style-phases']";
+  imports="['./phases', '../common']";
   optionAliases="input=input.data,output=mergeTags.spec";
 
   input -> fileToJSON -> makeGenerateDOM2Args -> generateDOM2 -> log_1 -> dateTag -> trace -> mergeTags -> log_2 -> jsonStringify -> writeStringFile;

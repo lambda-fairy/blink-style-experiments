@@ -1,5 +1,5 @@
 digraph process {
-  imports="['./style-phases']";
+  imports="['../common']";
   optionAliases="input=input.data";
 
   input -> readDir -> fileToJSON -> traceFilter -> tracePIDSplitter -> traceTIDSplitter;
