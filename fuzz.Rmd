@@ -2,7 +2,10 @@
 title: "Fuzzing stuff"
 author: "Chris Wong"
 date: "December 9, 2015"
-output: html_document
+output:
+  html_document:
+  md_document:
+    variant: markdown_github
 ---
 
 ```{r, echo=FALSE}
