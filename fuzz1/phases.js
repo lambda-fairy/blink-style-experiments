@@ -56,17 +56,6 @@ module.exports.map = erlnmyr.phase(
   },
   {expr: 'it'});
 
-module.exports.parseInt = erlnmyr.phase(
-  {
-    input: erlnmyr.types.string,
-    output: erlnmyr.types.number,
-    arity: '1:1',
-  },
-  function(s) {
-    return parseInt(s, this.options.base);
-  },
-  {base: 10});
-
 module.exports.generateDOM = erlnmyr.phase(
   {
     input: erlnmyr.types.number,
