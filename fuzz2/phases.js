@@ -27,11 +27,16 @@ function typeVar(s) {
 function makeRandom(seed) {
   var seed = seed || process.hrtime()[1];
   // The Alea algorithm is fastest
-  var rng = seedrandom.alea(seed);
-  return {
-    random: rng.double.bind(rng),
-    seed: seed,
+  var random = seedrandom.alea(seed);
+  random.choice = function(items) {
+    if (items.length === 0) return undefined;
+    return items[this.randint(0, items.length - 1)];
   };
+  random.randint = function(min, max) {
+    return min + Math.abs(this.int32()) % (max - min + 1);
+  };
+  random.seed = seed;
+  return random;
 }
 
 module.exports.makeGenerateDOM2Args = erlnmyr.phase(
@@ -42,18 +47,17 @@ module.exports.makeGenerateDOM2Args = erlnmyr.phase(
   },
   function(args) {
     var random = makeRandom(args.seed);
-    var randint = (min, max) => Math.floor(random.random() * (max - min + 1)) + min;
     var i = 0;
     while (i < args.samples) {
-      var branchiness = randint(args.minBranchiness, args.maxBranchiness);
-      var depthicity = randint(args.minDepthicity, args.maxDepthicity);
+      var branchiness = random.randint(args.minBranchiness, args.maxBranchiness);
+      var depthicity = random.randint(args.minDepthicity, args.maxDepthicity);
       var predictedNodeCount = Math.floor(
         (Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
       if (predictedNodeCount > args.maxNodeCount) continue;
       this.put({
         branchiness: branchiness,
         depthicity: depthicity,
-        seed: randint(0, Math.pow(2, 32) - 1),
+        seed: random.randint(0, Math.pow(2, 32) - 1),
       });
       ++i;
     }
@@ -68,13 +72,13 @@ module.exports.generateDOM2 = erlnmyr.phase(
   },
   function(args) {
     var random = makeRandom(args.seed);
-    var generator = new DOMGenerator(random.random, args.branchiness, args.depthicity);
+    var generator = new DOMGenerator(random, args.branchiness, args.depthicity);
     var result = generator.generateNode();
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
     this.tags.tag('nodeCount', result.countNodes());
     this.tags.tag('seed', random.seed);
-    this.put(result.render());
+    this.put(result.render(' '));
   },
   {seed: null});
 
@@ -99,35 +103,69 @@ module.exports.extractTags = erlnmyr.phase(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-var tagNames = [
-  'div',
-  'pre',
-  'table',
-  'tr',
-  'td',
-  'thead',
-  'span',
-  'li',
-  'ol',
-  'ul',
+var phrasingContent = [
   'a',
-  'textarea',
-  'input',
-  'media',
-  'video',
-  'option',
+  'b',
+  'br',
+  'button',
   'canvas',
   'hr',
-  'track',
-  'image',
+  'i',
   'iframe',
-  'embed',
-  'object',
-  'style',
-  'template',
+  'img',
+  'span',
+  'sub',
+  'sup',
+  'textarea',
 ];
-*/
+
+var flowContent = [
+  'div',
+  'p',
+  'pre',
+  'table',
+  'ol',
+  'ul',
+].concat(phrasingContent);
+
+var redBullet = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
+AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
+9TXL0Y4OHwAAAABJRU5ErkJggg==`;
+
+var tagMap = new Map([
+  ['a', {
+    children: phrasingContent,
+    attributes: new Map([['href', 'about:blank']]),
+  }],
+  ['b', { children: phrasingContent }],
+  ['br', { children: 'void' }],
+  ['button', { children: 'text' }],
+  ['canvas', { children: 'empty' }],
+  ['div', { children: flowContent }],
+  ['hr', { children: 'void' }],
+  ['i', { children: phrasingContent }],
+  ['iframe', {
+    children: 'empty',
+    attributes: new Map([['src', 'about:blank']]),
+  }],
+  ['img', {
+    children: 'void',
+    attributes: new Map([['src', redBullet]]),
+  }],
+  ['li', { children: phrasingContent }],
+  ['ol', { children: ['li']}],
+  ['p', { children: phrasingContent }],
+  ['pre', { children: phrasingContent }],
+  ['span', { children: phrasingContent }],
+  ['sub', { children: phrasingContent }],
+  ['sup', { children: phrasingContent }],
+  ['table', { children: ['tr']}],
+  ['textarea', { children: 'text' }],
+  ['td', { children: phrasingContent }],
+  ['th', { children: phrasingContent }],
+  ['tr', { children: ['td', 'th']}],
+  ['ul', { children: ['li']}],
+]);
 
 function* generateNames() {
   for (var i = 0; ; ++i) {
@@ -144,13 +182,31 @@ function Node(tagName, id) {
 Node.prototype.render = function(baseIndent, indent) {
   if (typeof baseIndent == 'undefined') baseIndent = '';
   if (typeof indent == 'undefined') indent = '';
+
+  var tagInfo = tagMap.get(this.tagName);
+
+  var attrs = '';
+  if (tagInfo.attributes) {
+    for (var attr of tagInfo.attributes.entries()) {
+      attrs += ` ${attr[0]}="${attr[1]}"`;
+    }
+  }
+
   var body;
   if (this.children.length > 0) {
     body = `\n${this.children.map(x => x.render(baseIndent, baseIndent + indent)).join('\n')}\n${indent}`;
   } else {
     body = '';
   }
-  return `${indent}<${this.tagName} id="${this.id}">${body}</${this.tagName}>`;
+
+  var endTag;
+  if (tagInfo.children !== 'void') {
+    endTag = `</${this.tagName}>`;
+  } else {
+    endTag = '';
+  }
+
+  return `${indent}<${this.tagName} id="${this.id}"${attrs}>${body}${endTag}`;
 }
 
 Node.prototype.countNodes = function() {
@@ -172,7 +228,7 @@ TextNode.prototype.countNodes = function() {
 }
 
 function DOMGenerator(random, branchiness, depthicity) {
-  // Random number generator. Returns a random value from the range `[0, 1)`.
+  // Random number generator.
   this.random = random;
   // Branching factor.
   this.branchiness = branchiness;
@@ -181,18 +237,22 @@ function DOMGenerator(random, branchiness, depthicity) {
   this.ids = generateNames();
 }
 
-DOMGenerator.prototype.generateNode = function(depth) {
-  if (typeof depth == 'undefined') depth = 0;
-  // var tagName = tagNames[Math.floor(this.random() * tagNames.length)];
-  var tagName = 'div';
+DOMGenerator.prototype.generateNode = function(permissibleTags, depth) {
+  if (typeof permissibleTags === 'undefined') permissibleTags = flowContent;
+  if (typeof depth === 'undefined') depth = 0;
+  var tagName = this.random.choice(permissibleTags);
   var node = new Node(tagName, this.ids.next().value);
-  if (depth < this.depthicity) {
+  var permissibleChildren = tagMap.get(tagName).children;
+  if (permissibleChildren === 'void' || permissibleChildren === 'empty') {
+    // Do nothing
+  } else if (permissibleChildren === 'text' || depth >= this.depthicity) {
+    node.children.push(new TextNode(tagName));
+  } else {
+    if (!Array.isArray(permissibleChildren)) throw 'oh noes';
     for (var width = 0; width < this.branchiness; ++width) {
-      var child = this.generateNode(1 + depth);
+      var child = this.generateNode(permissibleChildren, 1 + depth);
       node.children.push(child);
     }
-  } else {
-    node.children.push(new TextNode(tagName));
   }
   return node;
 }
