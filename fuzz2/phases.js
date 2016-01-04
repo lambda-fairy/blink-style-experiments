@@ -156,14 +156,14 @@ AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 var tagMap = new Map([
   ['a', new ElementType(phrasingContent, [['href', 'about:blank']])],
   ['b', new ElementType(phrasingContent)],
-  ['br', new ElementType(ElementType.VOID)],
-  ['button', new ElementType(ElementType.TEXT)],
-  ['canvas', new ElementType(ElementType.EMPTY)],
+  ['br', new ElementType(ContentModel.VOID)],
+  ['button', new ElementType(ContentModel.TEXT)],
+  ['canvas', new ElementType(ContentModel.EMPTY)],
   ['div', new ElementType(flowContent)],
-  ['hr', new ElementType(ElementType.VOID)],
+  ['hr', new ElementType(ContentModel.VOID)],
   ['i', new ElementType(phrasingContent)],
-  ['iframe', new ElementType(ElementType.EMPTY, [['src', 'about:blank']])],
-  ['img', new ElementType(ElementType.VOID, [['src', redBullet]])],
+  ['iframe', new ElementType(ContentModel.EMPTY, [['src', 'about:blank']])],
+  ['img', new ElementType(ContentModel.VOID, [['src', redBullet]])],
   ['li', new ElementType(phrasingContent)],
   ['ol', new ElementType(['li'])],
   ['p', new ElementType(phrasingContent)],
@@ -172,7 +172,7 @@ var tagMap = new Map([
   ['sub', new ElementType(phrasingContent)],
   ['sup', new ElementType(phrasingContent)],
   ['table', new ElementType(['tr'])],
-  ['textarea', new ElementType(ElementType.TEXT)],
+  ['textarea', new ElementType(ContentModel.TEXT)],
   ['td', new ElementType(phrasingContent)],
   ['th', new ElementType(phrasingContent)],
   ['tr', new ElementType(['td', 'th'])],
@@ -259,11 +259,13 @@ DOMGenerator.prototype.generateNode = function(permissibleTags, depth) {
     // Do nothing
   } else if (contentModel === ContentModel.TEXT || depth >= this.depthicity) {
     node.children.push(new TextNode(tagName));
-  } else {
+  } else if (contentModel instanceof ContentModel.Elements) {
     for (var width = 0; width < this.branchiness; ++width) {
       var child = this.generateNode(contentModel.allowedTags, 1 + depth);
       node.children.push(child);
     }
+  } else {
+    throw 'this code should never be reached';
   }
   return node;
 }
