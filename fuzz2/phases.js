@@ -73,12 +73,12 @@ module.exports.generateDOM2 = erlnmyr.phase(
   function(args) {
     var random = makeRandom(args.seed);
     var generator = new DOMGenerator(random, args.branchiness, args.depthicity);
-    var result = generator.generateNode();
+    var result = generator.generateNodes();
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
-    this.tags.tag('nodeCount', result.countNodes());
+    this.tags.tag('nodeCount', result.map(n => n.countNodes()).reduce((m, n) => m + n, 0));
     this.tags.tag('seed', random.seed);
-    this.put(result.render(' '));
+    this.put(result.map(n => n.render(' ')).join('\n'));
   },
   {seed: null});
 
@@ -103,81 +103,21 @@ module.exports.extractTags = erlnmyr.phase(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-var phrasingContent = [
-  'a',
-  'b',
-  'br',
-  'button',
-  'canvas',
-  'hr',
-  'i',
-  'iframe',
-  'img',
-  'span',
-  'sub',
-  'sup',
-  'textarea',
-];
-
-var flowContent = [
-  'div',
-  'p',
-  'pre',
-  'table',
-  'ol',
-  'ul',
-].concat(phrasingContent);
-
-function ElementType(contentModel, attributes) {
-  this.contentModel = Array.isArray(contentModel) ? new ContentModel.Elements(contentModel) : contentModel;
-  this.attributes = new Map(attributes);
-}
-
-var ContentModel = {}
-
-// Self-closing element, e.g. <br>
-ContentModel.VOID = 'void';
-
-// Should only contain text, e.g. <button>
-ContentModel.TEXT = 'text';
-
-// Should not have any content at all, e.g. <iframe>
-ContentModel.EMPTY = 'empty';
-
-// Can contain the listed elements
-ContentModel.Elements = function(allowedTags) {
-  this.allowedTags = allowedTags;
-};
-
 var redBullet = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
 AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 9TXL0Y4OHwAAAABJRU5ErkJggg==`;
 
-var tagMap = new Map([
-  ['a', new ElementType(phrasingContent, [['href', 'about:blank']])],
-  ['b', new ElementType(phrasingContent)],
-  ['br', new ElementType(ContentModel.VOID)],
-  ['button', new ElementType(ContentModel.TEXT)],
-  ['canvas', new ElementType(ContentModel.EMPTY)],
-  ['div', new ElementType(flowContent)],
-  ['hr', new ElementType(ContentModel.VOID)],
-  ['i', new ElementType(phrasingContent)],
-  ['iframe', new ElementType(ContentModel.EMPTY, [['src', 'about:blank']])],
-  ['img', new ElementType(ContentModel.VOID, [['src', redBullet]])],
-  ['li', new ElementType(phrasingContent)],
-  ['ol', new ElementType(['li'])],
-  ['p', new ElementType(phrasingContent)],
-  ['pre', new ElementType(phrasingContent)],
-  ['span', new ElementType(phrasingContent)],
-  ['sub', new ElementType(phrasingContent)],
-  ['sup', new ElementType(phrasingContent)],
-  ['table', new ElementType(['tr'])],
-  ['textarea', new ElementType(ContentModel.TEXT)],
-  ['td', new ElementType(phrasingContent)],
-  ['th', new ElementType(phrasingContent)],
-  ['tr', new ElementType(['td', 'th'])],
-  ['ul', new ElementType(['li'])],
+var tagMap = require('./alexa-stats.json');
+
+var tagAttributes = new Map([
+  ['a', [['href', 'about:blank']]],
+  ['iframe', [['src', 'about:blank']]],
+  ['img', [['src', redBullet]]],
 ]);
+
+// Source: http://www.programmerinterview.com/index.php/html5/void-elements-html5/
+var voidElements = new Set(
+  'area base br col command embed hr img input keygen link meta param source track wbr'.split());
 
 function* generateNames() {
   for (var i = 0; ; ++i) {
@@ -185,21 +125,19 @@ function* generateNames() {
   }
 }
 
-function Node(tagName, id) {
+function Node(tagName, id, children) {
   this.tagName = tagName;
   this.id = id;
-  this.children = [];
+  this.children = children || [];
 }
 
 Node.prototype.render = function(baseIndent, indent) {
   if (typeof baseIndent == 'undefined') baseIndent = '';
   if (typeof indent == 'undefined') indent = '';
 
-  var tagInfo = tagMap.get(this.tagName);
-
   var attrs = '';
-  if (tagInfo.attributes) {
-    for (var attr of tagInfo.attributes.entries()) {
+  if (tagAttributes.has(this.tagName)) {
+    for (var attr of tagAttributes.get(this.tagName)) {
       attrs += ` ${attr[0]}="${attr[1]}"`;
     }
   }
@@ -212,7 +150,7 @@ Node.prototype.render = function(baseIndent, indent) {
   }
 
   var endTag;
-  if (tagInfo.children !== 'void') {
+  if (!voidElements.has(this.tagName)) {
     endTag = `</${this.tagName}>`;
   } else {
     endTag = '';
@@ -232,6 +170,7 @@ function TextNode(text) {
 }
 
 TextNode.prototype.render = function(baseIndent, indent) {
+  if (typeof indent == 'undefined') indent = '';
   return `${indent}${this.text}`;
 }
 
@@ -249,26 +188,28 @@ function DOMGenerator(random, branchiness, depthicity) {
   this.ids = generateNames();
 }
 
-DOMGenerator.prototype.generateNode = function(permissibleTags, depth) {
-  if (typeof permissibleTags === 'undefined') permissibleTags = flowContent;
+DOMGenerator.prototype.generateNodes = function(parentTag, depth) {
+  if (typeof parentTag === 'undefined') parentTag = 'body';
   if (typeof depth === 'undefined') depth = 0;
-  var tagName = this.random.choice(permissibleTags);
-  var node = new Node(tagName, this.ids.next().value);
-  var contentModel = tagMap.get(tagName).contentModel;
-  if (contentModel === ContentModel.VOID || contentModel === ContentModel.EMPTY) {
-    // Do nothing
-  } else if (contentModel === ContentModel.TEXT || depth >= this.depthicity) {
-    node.children.push(new TextNode(tagName));
-  } else if (contentModel instanceof ContentModel.Elements) {
-    for (var width = 0; width < this.branchiness; ++width) {
-      var child = this.generateNode(contentModel.allowedTags, 1 + depth);
-      node.children.push(child);
+  var result = [];
+  for (var width = 0; width < this.branchiness; ++width) {
+    var tagName = this.random.choice(Object.getOwnPropertyNames(tagMap[parentTag]));
+    var node;
+    if (depth >= this.depthicity || tagName === '') {
+      node = new TextNode(parentTag);
+    } else {
+      var children;
+      if (tagMap[tagName] && Object.getOwnPropertyNames(tagMap[tagName]).length > 0)
+        children = this.generateNodes(tagName, 1 + depth);
+      else
+        children = [];
+      node = new Node(tagName, this.ids.next().value, children);
     }
-  } else {
-    throw 'this code should never be reached';
+    result.push(node);
   }
-  return node;
+  return result;
 }
 
 module.exports.Node = Node;
 module.exports.DOMGenerator = DOMGenerator;
+module.exports.makeRandom = makeRandom;
