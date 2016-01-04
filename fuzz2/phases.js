@@ -141,6 +141,9 @@ ContentModel.VOID = 'void';
 // Should only contain text, e.g. <button>
 ContentModel.TEXT = 'text';
 
+// Should not have any content at all, e.g. <iframe>
+ContentModel.EMPTY = 'empty';
+
 // Can contain the listed elements
 ContentModel.Elements = function(allowedTags) {
   this.allowedTags = allowedTags;
@@ -155,11 +158,11 @@ var tagMap = new Map([
   ['b', new ElementType(phrasingContent)],
   ['br', new ElementType(ElementType.VOID)],
   ['button', new ElementType(ElementType.TEXT)],
-  ['canvas', new ElementType(ElementType.TEXT)],
+  ['canvas', new ElementType(ElementType.EMPTY)],
   ['div', new ElementType(flowContent)],
   ['hr', new ElementType(ElementType.VOID)],
   ['i', new ElementType(phrasingContent)],
-  ['iframe', new ElementType(ElementType.TEXT, [['src', 'about:blank']])],
+  ['iframe', new ElementType(ElementType.EMPTY, [['src', 'about:blank']])],
   ['img', new ElementType(ElementType.VOID, [['src', redBullet]])],
   ['li', new ElementType(phrasingContent)],
   ['ol', new ElementType(['li'])],
@@ -252,7 +255,7 @@ DOMGenerator.prototype.generateNode = function(permissibleTags, depth) {
   var tagName = this.random.choice(permissibleTags);
   var node = new Node(tagName, this.ids.next().value);
   var contentModel = tagMap.get(tagName).contentModel;
-  if (contentModel === ContentModel.VOID) {
+  if (contentModel === ContentModel.VOID || contentModel === ContentModel.EMPTY) {
     // Do nothing
   } else if (contentModel === ContentModel.TEXT || depth >= this.depthicity) {
     node.children.push(new TextNode(tagName));
