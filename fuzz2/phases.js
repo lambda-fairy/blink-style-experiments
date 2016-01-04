@@ -128,43 +128,55 @@ var flowContent = [
   'ul',
 ].concat(phrasingContent);
 
+function ElementType(contentModel, attributes) {
+  this.contentModel = Array.isArray(contentModel) ? new ContentModel.Elements(contentModel) : contentModel;
+  this.attributes = new Map(attributes);
+}
+
+var ContentModel = {}
+
+// Self-closing element, e.g. <br>
+ContentModel.VOID = 'void';
+
+// Should only contain text, e.g. <button>
+ContentModel.TEXT = 'text';
+
+// Should not have any content at all, e.g. <iframe>
+ContentModel.EMPTY = 'empty';
+
+// Can contain the listed elements
+ContentModel.Elements = function(allowedTags) {
+  this.allowedTags = allowedTags;
+};
+
 var redBullet = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
 AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 9TXL0Y4OHwAAAABJRU5ErkJggg==`;
 
 var tagMap = new Map([
-  ['a', {
-    children: phrasingContent,
-    attributes: new Map([['href', 'about:blank']]),
-  }],
-  ['b', { children: phrasingContent }],
-  ['br', { children: 'void' }],
-  ['button', { children: 'text' }],
-  ['canvas', { children: 'empty' }],
-  ['div', { children: flowContent }],
-  ['hr', { children: 'void' }],
-  ['i', { children: phrasingContent }],
-  ['iframe', {
-    children: 'empty',
-    attributes: new Map([['src', 'about:blank']]),
-  }],
-  ['img', {
-    children: 'void',
-    attributes: new Map([['src', redBullet]]),
-  }],
-  ['li', { children: phrasingContent }],
-  ['ol', { children: ['li']}],
-  ['p', { children: phrasingContent }],
-  ['pre', { children: phrasingContent }],
-  ['span', { children: phrasingContent }],
-  ['sub', { children: phrasingContent }],
-  ['sup', { children: phrasingContent }],
-  ['table', { children: ['tr']}],
-  ['textarea', { children: 'text' }],
-  ['td', { children: phrasingContent }],
-  ['th', { children: phrasingContent }],
-  ['tr', { children: ['td', 'th']}],
-  ['ul', { children: ['li']}],
+  ['a', new ElementType(phrasingContent, [['href', 'about:blank']])],
+  ['b', new ElementType(phrasingContent)],
+  ['br', new ElementType(ContentModel.VOID)],
+  ['button', new ElementType(ContentModel.TEXT)],
+  ['canvas', new ElementType(ContentModel.EMPTY)],
+  ['div', new ElementType(flowContent)],
+  ['hr', new ElementType(ContentModel.VOID)],
+  ['i', new ElementType(phrasingContent)],
+  ['iframe', new ElementType(ContentModel.EMPTY, [['src', 'about:blank']])],
+  ['img', new ElementType(ContentModel.VOID, [['src', redBullet]])],
+  ['li', new ElementType(phrasingContent)],
+  ['ol', new ElementType(['li'])],
+  ['p', new ElementType(phrasingContent)],
+  ['pre', new ElementType(phrasingContent)],
+  ['span', new ElementType(phrasingContent)],
+  ['sub', new ElementType(phrasingContent)],
+  ['sup', new ElementType(phrasingContent)],
+  ['table', new ElementType(['tr'])],
+  ['textarea', new ElementType(ContentModel.TEXT)],
+  ['td', new ElementType(phrasingContent)],
+  ['th', new ElementType(phrasingContent)],
+  ['tr', new ElementType(['td', 'th'])],
+  ['ul', new ElementType(['li'])],
 ]);
 
 function* generateNames() {
@@ -242,17 +254,18 @@ DOMGenerator.prototype.generateNode = function(permissibleTags, depth) {
   if (typeof depth === 'undefined') depth = 0;
   var tagName = this.random.choice(permissibleTags);
   var node = new Node(tagName, this.ids.next().value);
-  var permissibleChildren = tagMap.get(tagName).children;
-  if (permissibleChildren === 'void' || permissibleChildren === 'empty') {
+  var contentModel = tagMap.get(tagName).contentModel;
+  if (contentModel === ContentModel.VOID || contentModel === ContentModel.EMPTY) {
     // Do nothing
-  } else if (permissibleChildren === 'text' || depth >= this.depthicity) {
+  } else if (contentModel === ContentModel.TEXT || depth >= this.depthicity) {
     node.children.push(new TextNode(tagName));
-  } else {
-    if (!Array.isArray(permissibleChildren)) throw 'oh noes';
+  } else if (contentModel instanceof ContentModel.Elements) {
     for (var width = 0; width < this.branchiness; ++width) {
-      var child = this.generateNode(permissibleChildren, 1 + depth);
+      var child = this.generateNode(contentModel.allowedTags, 1 + depth);
       node.children.push(child);
     }
+  } else {
+    throw 'this code should never be reached';
   }
   return node;
 }
