@@ -72,6 +72,7 @@ module.exports.makeGenerateDOM2Args = erlnmyr.phase(
       this.put({
         branchiness: branchiness,
         depthicity: depthicity,
+        tagMap: args.tagMap,
         seed: random.randint(0, Math.pow(2, 32) - 1),
       });
       ++i;
@@ -87,10 +88,13 @@ module.exports.generateDOM2 = erlnmyr.phase(
   },
   function(args) {
     var random = makeRandom(args.seed);
-    var generator = new DOMGenerator(random, args.branchiness, args.depthicity);
+    var tagMap = TagMaps[args.tagMap];
+    if (!tagMap) throw `Unknown tag map ${args.tagMap}`;
+    var generator = new DOMGenerator(random, args.branchiness, args.depthicity, tagMap);
     var result = generator.generateNodes();
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
+    this.tags.tag('tagMap', args.tagMap);
     this.tags.tag('nodeCount', result.map(n => n.countNodes()).reduce((m, n) => m + n, 0));
     this.tags.tag('seed', random.seed);
     this.put(result.map(n => n.render(' ')).join('\n'));
@@ -122,7 +126,17 @@ var redBullet = `data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA
 AAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO
 9TXL0Y4OHwAAAABJRU5ErkJggg==`;
 
-var tagMap = require('./alexa-stats.json');
+var TagMaps = {
+  alexa: require('./alexa-stats.json'),
+  simple: {
+    'body': {
+      'div': 1,
+    },
+    'div': {
+      'div': 1,
+    }
+  },
+};
 
 var tagAttributes = new Map([
   ['a', [['href', 'about:blank']]],
@@ -193,13 +207,15 @@ TextNode.prototype.countNodes = function() {
   return 1;
 }
 
-function DOMGenerator(random, branchiness, depthicity) {
+function DOMGenerator(random, branchiness, depthicity, tagMap) {
   // Random number generator.
   this.random = random;
   // Branching factor.
   this.branchiness = branchiness;
   // Maximum tree depth.
   this.depthicity = depthicity;
+  // The set of tags to use.
+  this.tagMap = tagMap;
   this.ids = generateNames();
 }
 
@@ -208,13 +224,13 @@ DOMGenerator.prototype.generateNodes = function(parentTag, depth) {
   if (typeof depth === 'undefined') depth = 0;
   var result = [];
   for (var width = 0; width < this.branchiness; ++width) {
-    var tagName = this.random.weightedChoice(tagMap[parentTag]);
+    var tagName = this.random.weightedChoice(this.tagMap[parentTag]);
     var node;
     if (depth >= this.depthicity || tagName === '') {
       node = new TextNode(parentTag);
     } else {
       var children;
-      if (tagMap[tagName] && Object.getOwnPropertyNames(tagMap[tagName]).length > 0)
+      if (this.tagMap[tagName] && Object.getOwnPropertyNames(this.tagMap[tagName]).length > 0)
         children = this.generateNodes(tagName, 1 + depth);
       else
         children = [];
