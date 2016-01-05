@@ -4,5 +4,5 @@
     "minDepthicity": 1,
     "maxDepthicity": 1,
     "maxNodeCount": 100000,
-    "samples": 100
+    "samples": 50
 }
