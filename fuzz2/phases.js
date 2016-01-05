@@ -32,8 +32,23 @@ function makeRandom(seed) {
     if (items.length === 0) return undefined;
     return items[this.randint(0, items.length - 1)];
   };
+  random.weightedChoice = function(weights) {
+    var totalWeight = 0;
+    for (var item of Object.getOwnPropertyNames(weights))
+      totalWeight += weights[item];
+    var threshold = this.uniform(0, totalWeight);
+    var partialSum = 0;
+    for (var item of Object.getOwnPropertyNames(weights)) {
+      partialSum += weights[item];
+      if (partialSum >= threshold) return item;
+    }
+    return undefined;
+  };
   random.randint = function(min, max) {
     return min + Math.abs(this.int32()) % (max - min + 1);
+  };
+  random.uniform = function(min, max) {
+    return min + (max - min) * this.double();
   };
   random.seed = seed;
   return random;
@@ -193,7 +208,7 @@ DOMGenerator.prototype.generateNodes = function(parentTag, depth) {
   if (typeof depth === 'undefined') depth = 0;
   var result = [];
   for (var width = 0; width < this.branchiness; ++width) {
-    var tagName = this.random.choice(Object.getOwnPropertyNames(tagMap[parentTag]));
+    var tagName = this.random.weightedChoice(tagMap[parentTag]);
     var node;
     if (depth >= this.depthicity || tagName === '') {
       node = new TextNode(parentTag);
