@@ -129,6 +129,7 @@ module.exports.generateDom2 = erlnmyr.phase(
     this.tags.tag('depthicity', args.depthicity);
     this.tags.tag('tagMap', args.tagMap);
     this.tags.tag('nodeCount', result.map(n => n.countNodes()).reduce((m, n) => m + n, 0));
+    this.tags.tag('ids', generator.ids);
     this.tags.tag('seed', random.seed);
     this.put(result.map(n => n.render(' ')).join('\n'));
   });
@@ -244,7 +245,8 @@ function DomGenerator(random, branchiness, depthicity, tagMap) {
   this.depthicity = depthicity;
   // The set of tags to use.
   this.tagMap = tagMap;
-  this.ids = generateNames();
+  this.namesIterator = generateNames();
+  this.ids = [];
 }
 
 DomGenerator.prototype.generateNodes = function(parentTag, depth) {
@@ -262,9 +264,15 @@ DomGenerator.prototype.generateNodes = function(parentTag, depth) {
         children = this.generateNodes(tagName, 1 + depth);
       else
         children = [];
-      node = new Node(tagName, this.ids.next().value, children);
+      node = new Node(tagName, this.nextId(), children);
     }
     result.push(node);
   }
+  return result;
+}
+
+DomGenerator.prototype.nextId = function() {
+  var result = 'i' + this.namesIterator.next().value;
+  this.ids.push(result);
   return result;
 }
