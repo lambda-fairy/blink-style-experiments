@@ -145,16 +145,19 @@ DomGenerator.prototype.generateNodes = function(parentTag, depth) {
   var result = [];
   for (var width = 0; width < this.branchiness; ++width) {
     var tagName = this.random.weightedChoice(this.tagMap[parentTag]);
-    var node;
     if (depth >= this.depthicity || tagName === '') {
-      node = new TextNode(parentTag);
+      // Optimization: merge consecutive text nodes into a single node
+      var newText = parentTag;
+      if (result.length > 0 && result[result.length-1] instanceof TextNode)
+        result[result.length-1].text += newText;
+      else
+        result.push(new TextNode(newText));
     } else {
       var children = [];
       if (this.tagMap[tagName] && Object.getOwnPropertyNames(this.tagMap[tagName]).length > 0)
         children = this.generateNodes(tagName, 1 + depth);
       result.push(new Node(tagName, this.nextId(), children));
     }
-    result.push(node);
   }
   return result;
 }
