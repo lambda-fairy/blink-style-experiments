@@ -34,7 +34,20 @@ function makeRandom(seed) {
   };
 }
 
-module.exports.makeGenerateDOM2Args = erlnmyr.phase(
+// Generates random parameters for `generateDOM2`.
+//
+// The JSON input should have the following format:
+// {
+//   "minBranchiness": the minimum value for the "branchiness" parameter
+//   "maxBranchiness": the maximum value for the "branchiness" parameter
+//   "minDepthicity": the minimum value for the "depthicity" parameter
+//   "maxDepthicity": the maximum value for the "depthicity" parameter
+//   "maxNodeCount": the maximum number of nodes in the output. Any set
+//     of parameters which may result in too many nodes will be
+//     discarded.
+//   "samples": the number of outputs to generate
+// }
+module.exports.generateSampleArgs = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.JSON,
@@ -47,24 +60,39 @@ module.exports.makeGenerateDOM2Args = erlnmyr.phase(
     while (i < args.samples) {
       var branchiness = randint(args.minBranchiness, args.maxBranchiness);
       var depthicity = randint(args.minDepthicity, args.maxDepthicity);
+      // Only emit this set of parameters if the node count is
+      // guaranteed to stay under the maximum.
+      // See <https://en.wikipedia.org/wiki/K-ary_tree#Properties_of_k-ary_trees>
       var predictedNodeCount = Math.floor(
         (Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
-      if (predictedNodeCount > args.maxNodeCount) continue;
-      this.put({
-        branchiness: branchiness,
-        depthicity: depthicity,
-        seed: randint(0, Math.pow(2, 32) - 1),
-      });
-      ++i;
+      if (predictedNodeCount <= args.maxNodeCount) {
+        this.put({
+          branchiness: branchiness,
+          depthicity: depthicity,
+          seed: randint(0, Math.pow(2, 32) - 1),
+        });
+        ++i;
+      }
     }
-  },
-  {});
+  });
 
+// Generates random HTML fragments.
+//
+// The JSON input should have the following format:
+// {
+//   "branchiness": the number of children contained by each non-leaf node
+//   "depthicity": the maximum depth of the tree
+//   "nodeCount": the maximum number of nodes in the tree
+//   "seed": the seed to use for random number generation
+// }
+//
+// If you want to generate multiple fragments, consider building the
+// parameters using `generateSampleArgs`.
 module.exports.generateDOM2 = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.string,
-    arity: '1:N',
+    arity: '1:1',
   },
   function(args) {
     var random = makeRandom(args.seed);
@@ -75,8 +103,7 @@ module.exports.generateDOM2 = erlnmyr.phase(
     this.tags.tag('nodeCount', result.countNodes());
     this.tags.tag('seed', random.seed);
     this.put(result.render());
-  },
-  {seed: null});
+  });
 
 module.exports.extractTags = erlnmyr.phase(
   {
@@ -99,36 +126,6 @@ module.exports.extractTags = erlnmyr.phase(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-/*
-var tagNames = [
-  'div',
-  'pre',
-  'table',
-  'tr',
-  'td',
-  'thead',
-  'span',
-  'li',
-  'ol',
-  'ul',
-  'a',
-  'textarea',
-  'input',
-  'media',
-  'video',
-  'option',
-  'canvas',
-  'hr',
-  'track',
-  'image',
-  'iframe',
-  'embed',
-  'object',
-  'style',
-  'template',
-];
-*/
-
 function* generateNames() {
   for (var i = 0; ; ++i) {
     yield i.toString(36);
@@ -144,11 +141,9 @@ function Node(tagName, id) {
 Node.prototype.render = function(baseIndent, indent) {
   if (typeof baseIndent == 'undefined') baseIndent = '';
   if (typeof indent == 'undefined') indent = '';
-  var body;
+  var body = '';
   if (this.children.length > 0) {
     body = `\n${this.children.map(x => x.render(baseIndent, baseIndent + indent)).join('\n')}\n${indent}`;
-  } else {
-    body = '';
   }
   return `${indent}<${this.tagName} id="${this.id}">${body}</${this.tagName}>`;
 }
@@ -196,6 +191,3 @@ DOMGenerator.prototype.generateNode = function(depth) {
   }
   return node;
 }
-
-module.exports.Node = Node;
-module.exports.DOMGenerator = DOMGenerator;
