@@ -56,7 +56,7 @@ module.exports.map = erlnmyr.phase(
   },
   {expr: 'it'});
 
-module.exports.generateDOM = erlnmyr.phase(
+module.exports.generateDom = erlnmyr.phase(
   {
     input: erlnmyr.types.number,
     output: erlnmyr.types.string,

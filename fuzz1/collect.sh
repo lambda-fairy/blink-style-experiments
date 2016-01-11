@@ -1,5 +1,6 @@
 #!/bin/sh
 
-chromium_src="$HOME/chromium/src"
+[ -z "$CHROMIUM_SRC" ] && CHROMIUM_SRC="$HOME/chromium/src"
+[ -z "$ERLNMYR" ] && ERLNMYR=erlnmyr
 
-../node_modules/erlenmeyer/erlnmyr collect.erlnmyr --chromium="$chromium_src"
+$ERLNMYR collect.erlnmyr --chromium="$CHROMIUM_SRC"

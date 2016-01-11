@@ -54,43 +54,76 @@ function makeRandom(seed) {
   return random;
 }
 
-module.exports.makeGenerateDOM2Args = erlnmyr.phase(
+function predictedNodeCount(branchiness, depthicity) {
+  // See <https://en.wikipedia.org/wiki/K-ary_tree#Properties_of_k-ary_trees>
+  if (branchiness == 1) return depthicity;
+  return Math.floor((Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
+}
+
+// Generates random parameters for `generateDom2`.
+//
+// The JSON input should have the following format:
+// {
+//   "minBranchiness": the minimum value for the "branchiness" parameter
+//   "maxBranchiness": the maximum value for the "branchiness" parameter
+//   "minDepthicity": the minimum value for the "depthicity" parameter
+//   "maxDepthicity": the maximum value for the "depthicity" parameter
+//   "maxNodeCount": the maximum number of nodes in the output. Any set
+//     of parameters which may result in too many nodes will be
+//     discarded.
+//   "samples": the number of outputs to generate
+// }
+module.exports.generateSampleArgs = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.JSON,
     arity: '1:N',
   },
   function(args) {
+    if (predictedNodeCount(args.minBranchiness, args.minDepthicity) > args.maxNodeCount)
+      throw 'parameters too large -- either reduce minBranchiness/minDepthicity or increase maxNodeCount';
     var random = makeRandom(args.seed);
     var i = 0;
     while (i < args.samples) {
       var branchiness = random.randint(args.minBranchiness, args.maxBranchiness);
       var depthicity = random.randint(args.minDepthicity, args.maxDepthicity);
-      var predictedNodeCount = Math.floor(
-        (Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
-      if (predictedNodeCount > args.maxNodeCount) continue;
-      this.put({
-        branchiness: branchiness,
-        depthicity: depthicity,
-        tagMap: args.tagMap,
-        seed: random.randint(0, Math.pow(2, 32) - 1),
-      });
-      ++i;
+      // Only emit this set of parameters if the node count is
+      // guaranteed to stay under the maximum.
+      if (predictedNodeCount(branchiness, depthicity) <= args.maxNodeCount) {
+        this.put({
+          branchiness: branchiness,
+          depthicity: depthicity,
+          tagMap: args.tagMap,
+          seed: randint(0, Math.pow(2, 32) - 1),
+        });
+        ++i;
+      }
     }
-  },
-  {});
+  });
 
-module.exports.generateDOM2 = erlnmyr.phase(
+// Generates random HTML fragments.
+//
+// The JSON input should have the following format:
+// {
+//   "branchiness": the number of children contained by each non-leaf node
+//   "depthicity": the maximum depth of the tree
+//   "nodeCount": the maximum number of nodes in the tree
+//   "seed": the seed to use for random number generation
+// }
+//
+// If you want to generate multiple fragments, consider building the
+// parameters using `generateSampleArgs`.
+module.exports.generateDom2 = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.string,
-    arity: '1:N',
+    arity: '1:1',
   },
   function(args) {
     var random = makeRandom(args.seed);
     var tagMap = TagMaps[args.tagMap];
     if (!tagMap) throw `Unknown tag map ${args.tagMap}`;
-    var generator = new DOMGenerator(random, args.branchiness, args.depthicity, tagMap);
+    var generator = new DomGenerator(random, args.branchiness, args.depthicity, tagMap);
     var result = generator.generateNodes();
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
@@ -98,8 +131,7 @@ module.exports.generateDOM2 = erlnmyr.phase(
     this.tags.tag('nodeCount', result.map(n => n.countNodes()).reduce((m, n) => m + n, 0));
     this.tags.tag('seed', random.seed);
     this.put(result.map(n => n.render(' ')).join('\n'));
-  },
-  {seed: null});
+  });
 
 module.exports.extractTags = erlnmyr.phase(
   {
@@ -171,18 +203,14 @@ Node.prototype.render = function(baseIndent, indent) {
     }
   }
 
-  var body;
+  var body = '';
   if (this.children.length > 0) {
     body = `\n${this.children.map(x => x.render(baseIndent, baseIndent + indent)).join('\n')}\n${indent}`;
-  } else {
-    body = '';
   }
 
-  var endTag;
+  var endTag = '';
   if (!voidElements.has(this.tagName)) {
     endTag = `</${this.tagName}>`;
-  } else {
-    endTag = '';
   }
 
   return `${indent}<${this.tagName} id="${this.id}"${attrs}>${body}${endTag}`;
@@ -207,8 +235,8 @@ TextNode.prototype.countNodes = function() {
   return 1;
 }
 
-function DOMGenerator(random, branchiness, depthicity, tagMap) {
-  // Random number generator.
+function DomGenerator(random, branchiness, depthicity, tagMap) {
+  // Random number generator. Returns a random value from the range `[0, 1)`.
   this.random = random;
   // Branching factor.
   this.branchiness = branchiness;
@@ -219,7 +247,7 @@ function DOMGenerator(random, branchiness, depthicity, tagMap) {
   this.ids = generateNames();
 }
 
-DOMGenerator.prototype.generateNodes = function(parentTag, depth) {
+DomGenerator.prototype.generateNodes = function(parentTag, depth) {
   if (typeof parentTag === 'undefined') parentTag = 'body';
   if (typeof depth === 'undefined') depth = 0;
   var result = [];
@@ -240,7 +268,3 @@ DOMGenerator.prototype.generateNodes = function(parentTag, depth) {
   }
   return result;
 }
-
-module.exports.Node = Node;
-module.exports.DOMGenerator = DOMGenerator;
-module.exports.makeRandom = makeRandom;
