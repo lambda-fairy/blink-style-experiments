@@ -34,7 +34,7 @@ function makeRandom(seed) {
   };
 }
 
-// Generates random parameters for `generateDOM2`.
+// Generates random parameters for `generateDom2`.
 //
 // The JSON input should have the following format:
 // {
@@ -88,7 +88,7 @@ module.exports.generateSampleArgs = erlnmyr.phase(
 //
 // If you want to generate multiple fragments, consider building the
 // parameters using `generateSampleArgs`.
-module.exports.generateDOM2 = erlnmyr.phase(
+module.exports.generateDom2 = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.string,
@@ -96,7 +96,7 @@ module.exports.generateDOM2 = erlnmyr.phase(
   },
   function(args) {
     var random = makeRandom(args.seed);
-    var generator = new DOMGenerator(random.random, args.branchiness, args.depthicity);
+    var generator = new DomGenerator(random.random, args.branchiness, args.depthicity);
     var result = generator.generateNode();
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
@@ -166,7 +166,7 @@ TextNode.prototype.countNodes = function() {
   return 1;
 }
 
-function DOMGenerator(random, branchiness, depthicity) {
+function DomGenerator(random, branchiness, depthicity) {
   // Random number generator. Returns a random value from the range `[0, 1)`.
   this.random = random;
   // Branching factor.
@@ -176,7 +176,7 @@ function DOMGenerator(random, branchiness, depthicity) {
   this.ids = generateNames();
 }
 
-DOMGenerator.prototype.generateNode = function(depth) {
+DomGenerator.prototype.generateNode = function(depth) {
   if (typeof depth == 'undefined') depth = 0;
   // var tagName = tagNames[Math.floor(this.random() * tagNames.length)];
   var tagName = 'div';
