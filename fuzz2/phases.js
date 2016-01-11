@@ -34,6 +34,12 @@ function makeRandom(seed) {
   };
 }
 
+function predictedNodeCount(branchiness, depthicity) {
+  // See <https://en.wikipedia.org/wiki/K-ary_tree#Properties_of_k-ary_trees>
+  if (branchiness == 1) return depthicity;
+  return Math.floor((Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
+}
+
 // Generates random parameters for `generateDom2`.
 //
 // The JSON input should have the following format:
@@ -54,6 +60,8 @@ module.exports.generateSampleArgs = erlnmyr.phase(
     arity: '1:N',
   },
   function(args) {
+    if (predictedNodeCount(args.minBranchiness, args.minDepthicity) > args.maxNodeCount)
+      throw 'parameters too large -- either reduce minBranchiness/minDepthicity or increase maxNodeCount';
     var random = makeRandom(args.seed);
     var randint = (min, max) => Math.floor(random.random() * (max - min + 1)) + min;
     var i = 0;
@@ -62,10 +70,7 @@ module.exports.generateSampleArgs = erlnmyr.phase(
       var depthicity = randint(args.minDepthicity, args.maxDepthicity);
       // Only emit this set of parameters if the node count is
       // guaranteed to stay under the maximum.
-      // See <https://en.wikipedia.org/wiki/K-ary_tree#Properties_of_k-ary_trees>
-      var predictedNodeCount = Math.floor(
-        (Math.pow(branchiness, depthicity + 1) - 1) / (branchiness - 1));
-      if (predictedNodeCount <= args.maxNodeCount) {
+      if (predictedNodeCount(branchiness, depthicity) <= args.maxNodeCount) {
         this.put({
           branchiness: branchiness,
           depthicity: depthicity,
