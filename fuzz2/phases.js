@@ -45,7 +45,7 @@ function predictedNodeCount(branchiness, depthicity) {
 //     discarded.
 //   "samples": the number of outputs to generate
 // }
-module.exports.generateSampleArgs = erlnmyr.phase(
+module.exports.generateDomSampleArgs = erlnmyr.phase(
   {
     input: erlnmyr.types.JSON,
     output: erlnmyr.types.JSON,
