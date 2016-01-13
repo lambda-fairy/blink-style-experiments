@@ -82,3 +82,21 @@ module.exports.hostnameTag = phase({input: typeVar('a'), output: typeVar('a'), a
     return data;
   });
 
+module.exports.extractTags = erlnmyr.phase(
+  {
+    input: typeVar('a'),
+    output: typeVar('a'),
+    arity: '1:1',
+  },
+  function(data, tags) {
+    var input = tags.read(this.options.input);
+    var fragments = input.split('-');
+    for (var i = 0; i < this.options.tags.length; ++i) {
+      tags.tag(this.options.tags[i], fragments[i]);
+    }
+    return data;
+  },
+  {
+    input: 'filename',
+    tags: [],
+  });
