@@ -94,7 +94,7 @@ module.exports.generateSampleArgs = erlnmyr.phase(
           branchiness: branchiness,
           depthicity: depthicity,
           tagMap: args.tagMap,
-          seed: randint(0, Math.pow(2, 32) - 1),
+          seed: random.randint(0, Math.pow(2, 32) - 1),
         });
         ++i;
       }
