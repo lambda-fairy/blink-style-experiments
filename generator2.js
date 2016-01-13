@@ -125,6 +125,21 @@ TextNode.prototype.countNodes = function() {
   return 1;
 }
 
+function generateDom(random, branchiness, depthicity, tagMap) {
+  var gen = new DomGenerator(random, branchiness, depthicity, tagMap);
+  var nodes = gen.generateNodes();
+  return {
+    nodes: nodes,
+    ids: gen.ids,
+    countNodes: function() {
+      return this.nodes.map(n => n.countNodes()).reduce((m, n) => m + n, 0);
+    },
+    render: function(indent) {
+      return this.nodes.map(n => n.render(indent)).join('\n');
+    },
+  };
+}
+
 function DomGenerator(random, branchiness, depthicity, tagMap) {
   // Random number generator.
   this.random = random;
@@ -168,6 +183,5 @@ DomGenerator.prototype.nextId = function() {
   return result;
 }
 
-module.exports.Node = Node;
-module.exports.DomGenerator = DomGenerator;
 module.exports.makeRandom = makeRandom;
+module.exports.generateDom = generateDom;

@@ -93,15 +93,14 @@ module.exports.generateDom2 = erlnmyr.phase(
   },
   function(args) {
     var random = generator2.makeRandom(args.seed);
-    var gen = new generator2.DomGenerator(random, args.branchiness, args.depthicity, args.tagMap);
-    var result = gen.generateNodes();
+    var result = generator2.generateDom(random, args.branchiness, args.depthicity, args.tagMap);
     this.tags.tag('branchiness', args.branchiness);
     this.tags.tag('depthicity', args.depthicity);
     this.tags.tag('tagMap', args.tagMap);
-    this.tags.tag('nodeCount', result.map(n => n.countNodes()).reduce((m, n) => m + n, 0));
-    this.tags.tag('ids', gen.ids);
+    this.tags.tag('nodeCount', result.countNodes());
+    this.tags.tag('ids', result.ids);
     this.tags.tag('seed', random.seed);
-    this.put(result.map(n => n.render(' ')).join('\n'));
+    this.put(result.render(' '));
   });
 
 module.exports.extractTags = erlnmyr.phase(
