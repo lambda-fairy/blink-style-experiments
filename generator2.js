@@ -183,5 +183,61 @@ DomGenerator.prototype.nextId = function() {
   return result;
 }
 
+function generateCss(random, tagMap, simpleSelectorMap, classes, ids, propertyString, ruleCount) {
+  var gen = new CssGenerator(random, tagMap, simpleSelectorMap, classes, ids, propertyString);
+  var rules = [];
+  for (var i = 0; i < ruleCount; ++i) {
+    rules.push(gen.generateOneRule());
+  }
+  return {
+    rules: rules,
+    selectorsUsed: gen.selectorsUsed,
+    render: function() {
+      return this.rules.join('\n');
+    },
+  };
+}
+
+function CssGenerator(random, tagMap, simpleSelectorMap, classes, ids, propertyString) {
+  this.random = random;
+  this.tagMap = tagMap;
+  this.simpleSelectorMap = simpleSelectorMap;
+  this.classes = classes;
+  this.ids = ids;
+  this.propertyString = propertyString;
+
+  this.selectorsUsed = {tag: 0, universal: 0};
+  for (var selector of Object.keys(simpleSelectorMap)) {
+    this.selectorsUsed[selector] = 0;
+  }
+}
+
+CssGenerator.prototype.generateOneRule = function() {
+  var firstToken = this.random.weightedChoice(this.tagMap);
+  if (firstToken === '*') ++this.selectorsUsed.universal;
+  else ++this.selectorsUsed.tag;
+  var selectorTokens = [firstToken];
+  loop: for (;;) {
+    var token = this.random.weightedChoice(this.simpleSelectorMap);
+    switch (token) {
+      case 'end':
+        break loop;
+      case 'class':
+        if (this.classes.length === 0) continue;
+        selectorTokens.push(`.${this.random.choice(this.classes)}`);
+        break;
+      case 'id':
+        if (this.ids.length === 0) continue;
+        selectorTokens.push(`#${this.random.choice(this.ids)}`);
+        break;
+      default:
+        throw `Unknown selector type: ${token}`;
+    }
+    ++this.selectorsUsed[token];
+  }
+  return `${selectorTokens.join('')} { ${this.propertyString} }`;
+}
+
 module.exports.makeRandom = makeRandom;
 module.exports.generateDom = generateDom;
+module.exports.generateCss = generateCss;
