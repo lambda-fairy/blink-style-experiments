@@ -24,11 +24,11 @@ function makeRandom(seed) {
   };
   random.weightedChoice = function(weights) {
     var totalWeight = 0;
-    for (var item of Object.getOwnPropertyNames(weights))
+    for (var item of Object.keys(weights))
       totalWeight += weights[item];
     var threshold = this.uniform(0, totalWeight);
     var partialSum = 0;
-    for (var item of Object.getOwnPropertyNames(weights)) {
+    for (var item of Object.keys(weights)) {
       partialSum += weights[item];
       if (partialSum >= threshold) return item;
     }
@@ -169,7 +169,7 @@ DomGenerator.prototype.generateNodes = function(parentTag, depth) {
         result.push(new TextNode(newText));
     } else {
       var children = [];
-      if (this.tagMap[tagName] && Object.getOwnPropertyNames(this.tagMap[tagName]).length > 0)
+      if (this.tagMap[tagName] && Object.keys(this.tagMap[tagName]).length > 0)
         children = this.generateNodes(tagName, 1 + depth);
       result.push(new Node(tagName, this.nextId(), children));
     }
