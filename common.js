@@ -19,34 +19,39 @@ var phase = erlnmyr.phase;
 module.exports.amalgamate = phase({input: types.number, output: types.string, arity: 'N:1'},
   {
     onStart: function() {
-      if (this.order == undefined) {
-        this.order = {};
-        this.names = [];
-        this.max = 0;
-        this.emittedOrder = false;
+      if (this.columnIndices === undefined) {
+        // Make sure that every row's fields are in a consistent order
+        this.columnIndices = {};
+        this.columnNames = [];
+        this.isFirstRow = true;
       }
-      this.data = [];
+      this.row = [];
+      this.getColumnIndex = function(name) {
+        if (this.columnIndices[name] === undefined) {
+          this.columnIndices[name] = this.columnNames.length;
+          this.columnNames.push(name);
+        }
+        return this.columnIndices[name];
+      };
     },
-    impl: function(data, tags) {
-      var name = tags.read('eventName');
-      if (this.order[name] == undefined) {
-        this.order[name] = this.max++;
-        this.names.push(name);
+    impl: function(value, tags) {
+      for (var tag of this.options.tags) {
+        this.row[this.getColumnIndex(tag)] = tags.read(tag);
       }
-      this.data[this.order[name]] = data;
-      this.id = tags.read(this.options.idTag);
+      var name = tags.read('eventName');
+      this.row[this.getColumnIndex(name)] = value;
     },
     onCompletion: function() {
       var r = '';
-      if (!this.emittedOrder) {
-        r = 'id, ' + this.names.reduce(function(a, b) { return a + ', ' + b}) + '\n';
-        this.emittedOrder = true;
+      if (this.isFirstRow) {
+        r = this.columnNames.join(', ') + '\n';
+        this.isFirstRow = false;
       }
-      r += this.id + ', ' + this.data.reduce(function(a, b) { return a + ', ' + b});
+      r += this.row.join(', ');
       return r;
     }
   },
-  {idTag: ''});
+  {tags: []});
 
 function typeVar(s) { return (function(v) {
   if (!v[s]) {
