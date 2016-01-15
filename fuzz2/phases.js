@@ -100,5 +100,5 @@ module.exports.generateDom2 = erlnmyr.phase(
     this.tags.tag('nodeCount', result.countNodes());
     this.tags.tag('ids', result.ids);
     this.tags.tag('seed', random.seed);
-    this.put(result.render(' '));
+    return result.render();
   });
