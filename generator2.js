@@ -183,8 +183,8 @@ DomGenerator.prototype.nextId = function() {
   return result;
 }
 
-function generateCss(random, tagMap, simpleSelectorMap, classes, ids, propertyString, ruleCount) {
-  var gen = new CssGenerator(random, tagMap, simpleSelectorMap, classes, ids, propertyString);
+function generateCss(random, tagMap, simpleSelectorMap, combinatorMap, classes, ids, propertyString, ruleCount) {
+  var gen = new CssGenerator(random, tagMap, simpleSelectorMap, combinatorMap, classes, ids, propertyString);
   var rules = [];
   for (var i = 0; i < ruleCount; ++i) {
     rules.push(gen.generateOneRule());
@@ -198,10 +198,11 @@ function generateCss(random, tagMap, simpleSelectorMap, classes, ids, propertySt
   };
 }
 
-function CssGenerator(random, tagMap, simpleSelectorMap, classes, ids, propertyString) {
+function CssGenerator(random, tagMap, simpleSelectorMap, combinatorMap, classes, ids, propertyString) {
   this.random = random;
   this.tagMap = tagMap;
   this.simpleSelectorMap = simpleSelectorMap;
+  this.combinatorMap = combinatorMap;
   this.classes = classes;
   this.ids = ids;
   this.propertyString = propertyString;
@@ -210,32 +211,68 @@ function CssGenerator(random, tagMap, simpleSelectorMap, classes, ids, propertyS
   for (var selector of Object.keys(simpleSelectorMap)) {
     this.selectorsUsed[selector] = 0;
   }
+  for (var selector of Object.keys(combinatorMap)) {
+    this.selectorsUsed[selector] = 0;
+  }
 }
 
 CssGenerator.prototype.generateOneRule = function() {
-  var firstToken = this.random.weightedChoice(this.tagMap);
-  if (firstToken === '*') ++this.selectorsUsed.universal;
-  else ++this.selectorsUsed.tag;
-  var selectorTokens = [firstToken];
-  loop: for (;;) {
-    var token = this.random.weightedChoice(this.simpleSelectorMap);
-    switch (token) {
+  var selector = this.generateSelector();
+  return `${selector} { ${this.propertyString} }`;
+}
+
+CssGenerator.prototype.generateSelector = function() {
+  var tokens = [];
+  this.appendSimpleSelectorTokensTo(tokens);
+  do {
+    var next = this.random.weightedChoice(this.combinatorMap);
+    switch (next) {
       case 'end':
-        break loop;
+        continue;
+      case 'descendant':
+        tokens.push(' ');
+        break;
+      case 'child':
+        tokens.push('>');
+        break;
+      case 'adjacentSibling':
+        tokens.push('+');
+        break;
+      case 'generalSibling':
+        tokens.push('~');
+        break;
+      default:
+        throw `Unknown selector combinator type: ${next}`;
+    }
+    ++this.selectorsUsed[next];
+    this.appendSimpleSelectorTokensTo(tokens);
+  } while (next !== 'end');
+  return tokens.join('');
+}
+
+CssGenerator.prototype.appendSimpleSelectorTokensTo = function(tokens) {
+  var tagOrStar = this.random.weightedChoice(this.tagMap);
+  if (tagOrStar === '*') ++this.selectorsUsed.universal;
+  else ++this.selectorsUsed.tag;
+  tokens.push(tagOrStar);
+  do {
+    var next = this.random.weightedChoice(this.simpleSelectorMap);
+    switch (next) {
+      case 'end':
+        continue;
       case 'class':
         if (this.classes.length === 0) continue;
-        selectorTokens.push(`.${this.random.choice(this.classes)}`);
+        tokens.push(`.${this.random.choice(this.classes)}`);
         break;
       case 'id':
         if (this.ids.length === 0) continue;
-        selectorTokens.push(`#${this.random.choice(this.ids)}`);
+        tokens.push(`#${this.random.choice(this.ids)}`);
         break;
       default:
-        throw `Unknown selector type: ${token}`;
+        throw `Unknown selector type: ${next}`;
     }
-    ++this.selectorsUsed[token];
-  }
-  return `${selectorTokens.join('')} { ${this.propertyString} }`;
+    ++this.selectorsUsed[next];
+  } while (next !== 'end');
 }
 
 module.exports.makeRandom = makeRandom;
