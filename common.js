@@ -36,6 +36,8 @@ module.exports.amalgamate = phase({input: types.number, output: types.string, ar
     },
     impl: function(value, tags) {
       for (var tag of this.options.tags) {
+        var tagValue = tags.read(tag);
+        if (tagValue === undefined || tagValue === null) tagValue = '';
         this.row[this.getColumnIndex(tag)] = tags.read(tag);
       }
       var name = tags.read('eventName');
