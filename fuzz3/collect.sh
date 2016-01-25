@@ -3,7 +3,13 @@
 [ -z "$CHROMIUM_SRC" ] && CHROMIUM_SRC="$HOME/chromium/src"
 [ -z "$ERLNMYR" ] && ERLNMYR=erlnmyr
 
-for json_input in experiment-specs/*
+input_files="$*"
+if [ -z "$input_files" ]
+then
+    input_files=experiment-specs/*.json
+fi
+
+for json_input in $input_files
 do
     experiment_name="$(basename "$json_input" .json)"
     output_dir="traces/$experiment_name"
