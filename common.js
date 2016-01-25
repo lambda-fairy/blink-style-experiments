@@ -107,3 +107,51 @@ module.exports.extractTags = erlnmyr.phase(
     input: 'filename',
     tags: [],
   });
+
+// Outputs a JSON object which includes both the input value and its
+// associated tags. This output will have two fields:
+//
+// {
+//   "data": the original input value
+//   "tags": the tags that go with it
+// }
+//
+// The "tags" option is an array which lists what tags to include. If
+// omitted, all tags will be included in the output.
+module.exports.attachTagsToJson = erlnmyr.phase(
+  {
+    input: typeVar('a'),
+    output: types.JSON,
+    arity: '1:1',
+  },
+  function(data) {
+    var keys = this.options.tags;
+    if (keys === null) {
+      keys = Object.keys(this.tags.tags);
+    }
+    var tags = {};
+    for (var key of keys) {
+      tags[key] = this.tags.read(key);
+    }
+    return { tags: tags, data: data };
+  },
+  {
+    tags: null,
+  });
+
+// Extracts the tags back from the JSON input.
+//
+// This is the inverse of `attachTagsToJson`.
+module.exports.extractTagsFromJson = erlnmyr.phase(
+  {
+    input: types.JSON,
+    output: typeVar('a'),
+    arity: '1:1',
+  },
+  function(input) {
+    var tags = input.tags;
+    for (var key of Object.keys(tags)) {
+      this.tags.tag(key, tags[key]);
+    }
+    return input.data;
+  });

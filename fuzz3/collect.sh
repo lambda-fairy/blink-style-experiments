@@ -8,5 +8,5 @@ do
     experiment_name="$(basename "$json_input" .json)"
     output_dir="traces/$experiment_name"
     $ERLNMYR collect.erlnmyr --chromium="$CHROMIUM_SRC" \
-        --input="$json_input" --output="$output_dir"'/$1-$2-$3-$4-$5-$6-$7-$8-$9-$10.trace'
+        --input="$json_input" --output="$output_dir"'/$1-$2.trace'
 done

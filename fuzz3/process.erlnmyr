@@ -2,11 +2,10 @@ digraph process {
   imports="['./phases', '../common']";
   optionAliases="input=input.data";
 
-  input -> readDir -> fileToJSON -> traceFilter -> updateTag -> extractTags;
-  extractTags -> traceTree -> traceAnalyser -> amalgamate -> log;
+  input -> readDir -> fileToJSON -> extractTagsFromJson -> traceFilter -> updateTag;
+  updateTag -> traceTree -> traceAnalyser -> amalgamate -> log;
 
   traceFilter [traceEvents="['HTMLDocumentParser::processParsedChunkFromBackgroundParser','Document::updateStyle','FrameView::performLayout']"];
   updateTag [tag="filename", in="/.*[/](.+)[.]trace/", out="$1"];
-  extractTags [tags="['date','seed','branchiness','depthicity','nodeCount','ruleCount','selectorsUsed.descendant','selectorsUsed.child','selectorsUsed.adjacentSibling','selectorsUsed.generalSibling']"];
   amalgamate [tags="['branchiness','depthicity','nodeCount','ruleCount','selectorsUsed.descendant','selectorsUsed.child','selectorsUsed.adjacentSibling','selectorsUsed.generalSibling']"];
 }
