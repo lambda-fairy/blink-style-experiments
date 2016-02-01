@@ -7,5 +7,5 @@ digraph process {
 
   traceFilter [traceEvents="['HTMLDocumentParser::processParsedChunkFromBackgroundParser','Document::updateStyle','FrameView::performLayout']"];
   updateTag [tag="filename", in="/.*[/](.+)[.]trace/", out="$1"];
-  amalgamate [tags="['branchiness','depthicity','nodeCount','ruleCount','selectorsUsed.descendant','selectorsUsed.child','selectorsUsed.adjacentSibling','selectorsUsed.generalSibling']"];
+  amalgamate [tags="['branchiness','depthicity','nodeCount','ruleCount','selectorsUsed.tag','selectorsUsed.universal','selectorsUsed.id','selectorsUsed.descendant','selectorsUsed.child','selectorsUsed.adjacentSibling','selectorsUsed.generalSibling']"];
 }
