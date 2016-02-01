@@ -2,16 +2,16 @@
     "domArgs": {
         "minBranchiness": 50,
         "maxBranchiness": 50,
-        "minDepthicity": 1,
-        "maxDepthicity": 5,
+        "minDepthicity": 2,
+        "maxDepthicity": 2,
         "maxNodeCount": 100000,
         "tagMap": "alexa",
-        "samples": 100
+        "samples": 250
     },
     "cssArgs": {
         "propertyString": "opacity: 0.99",
         "tagMap": {"*": 1, "div": 9},
-        "simpleSelectorMap": {"class": 1, "id": 1, "end": 2},
+        "simpleSelectorMap": {"class": 1, "id": 1, "end": 1},
         "combinatorMap": {"descendant": 1, "child": 1, "adjacentSibling": 1, "generalSibling": 1, "end": 1},
         "minRuleCount": 1,
         "maxRuleCount": 50
