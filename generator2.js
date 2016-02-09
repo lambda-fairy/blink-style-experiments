@@ -68,7 +68,7 @@ var tagAttributes = new Map([
 
 // Source: http://www.programmerinterview.com/index.php/html5/void-elements-html5/
 var voidElements = new Set(
-  'area base br col command embed hr img input keygen link meta param source track wbr'.split());
+  'area base br col command embed hr img input keygen link meta param source track wbr'.split(' '));
 
 function* generateNames() {
   for (var i = 0; ; ++i) {
