@@ -66,6 +66,20 @@ If we take a look at one of the selector types -- general sibling selectors for 
 
 ![](report_files/figure-html/unnamed-chunk-12-1.png) 
 
+## Sibling selectors and DOM branching factor
+
+
+
+Both adjacent sibling (`+`) and general sibling (`~`) selectors have a reputation for being slow. In particular, since a general sibling selector needs to check *all* the siblings before the current node, the time to match this selector should grow quadratically with the number of nodes in total.
+
+The data confirms this idea. The time to match general sibling selectors fits a linear regression model on the square of the DOM branching factor (p < 0).
+
+![](report_files/figure-html/unnamed-chunk-14-1.png) 
+
+Surprisingly, adjacent sibling selectors follow a quadratic trend as well (p < 0).
+
+![](report_files/figure-html/unnamed-chunk-15-1.png) 
+
 ## Adding more classes and IDs
 
 
@@ -74,7 +88,7 @@ At first, it was thought that adding more class or ID selectors to a rule would 
 
 This hypothesis turned out to be false. In fact, adding more ID selectors made matching slower (p < 6.0582235\times 10^{-8}):
 
-![](report_files/figure-html/unnamed-chunk-14-1.png) 
+![](report_files/figure-html/unnamed-chunk-17-1.png) 
 
 ## Comparing different selector types
 
@@ -90,7 +104,7 @@ I found that these selectors can be split into three categories based on perform
 
 This split can be seen in the plot below:
 
-![](report_files/figure-html/unnamed-chunk-16-1.png) 
+![](report_files/figure-html/unnamed-chunk-19-1.png) 
 
 It is interesting to note that general sibling selectors are about as fast as their adjacent counterparts.
 

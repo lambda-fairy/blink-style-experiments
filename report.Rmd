@@ -121,6 +121,40 @@ ggplot(allSelectors, aes(x = selectorsUsed.generalSibling, y = Document..updateS
   geom_smooth(method = 'lm')
 ```
 
+## Sibling selectors and DOM branching factor
+
+```{r, echo=FALSE}
+branch.adjSibling <- read.csv('fuzz3/summary-adjacent-sibling-branchiness.csv')
+branch.genSibling <- read.csv('fuzz3/summary-general-sibling-branchiness.csv')
+
+branch.adjSibling.cor <- cor.test(~ branch.adjSibling$Document..updateStyle + I(branch.adjSibling$branchiness ^ 2))
+branch.genSibling.cor <- cor.test(~ branch.genSibling$Document..updateStyle + I(branch.genSibling$branchiness ^ 2))
+```
+
+Both adjacent sibling (`+`) and general sibling (`~`) selectors have a reputation for being slow. In particular, since a general sibling selector needs to check *all* the siblings before the current node, the time to match this selector should grow quadratically with the number of nodes in total.
+
+The data confirms this idea. The time to match general sibling selectors fits a linear regression model on the square of the DOM branching factor (p < `r branch.genSibling.cor$p.value`).
+
+```{r, echo=FALSE}
+ggplot(branch.genSibling, aes(x = branchiness, y = Document..updateStyle)) +
+  labs(title = "General sibling selectors (A ~ B) with wide DOM trees",
+       x = "Branching factor",
+       y = "Time taken in Document::updateStyle (μs)") +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ I(x^2))
+```
+
+Surprisingly, adjacent sibling selectors follow a quadratic trend as well (p < `r branch.adjSibling.cor$p.value`).
+
+```{r, echo=FALSE}
+ggplot(branch.adjSibling, aes(x = branchiness, y = Document..updateStyle)) +
+  labs(title = "Adjacent sibling selectors (A + B) with wide DOM trees",
+       x = "Branching factor",
+       y = "Time taken in Document::updateStyle (μs)") +
+  geom_point() +
+  geom_smooth(method = 'lm', formula = y ~ I(x^2))
+```
+
 ## Adding more classes and IDs
 
 ```{r, echo=FALSE}
