@@ -136,7 +136,7 @@ img {
 </div>
 <div id="conclusions" class="section level2">
 <h2>Conclusions</h2>
-<p>These results confirm the usual advice to favor classes and IDs over more complex selectors. But the speed of descendant selectors may seem counterintuitive. According to <a href="http://calendar.perfplanet.com/2011/css-selector-performance-has-changed-for-the-better/">Sullivan (2011)</a>, optimizations such as ancestor filters and fast paths have made descendant selectors more efficient than intuition would suggest.</p>
+<p>These results confirm the usual advice to favor classes and IDs over more complex selectors. But the speed of descendant selectors may seem counterintuitive. According to <a href="http://calendar.perfplanet.com/2011/css-selector-performance-has-changed-for-the-better/">Sullivan (2011)</a>, optimizations such as ancestor filters and fast paths have made descendant selectors more efficient than intuition would suggest. In addition, while sibling selectors are slower than other types, their cost differs only by a constant factor; they do not have the quadratic behavior suggested by a naive implementation.</p>
 </div>
 </div>
 
