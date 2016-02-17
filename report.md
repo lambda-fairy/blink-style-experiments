@@ -70,13 +70,13 @@ If we take a look at one of the selector types -- general sibling selectors for 
 
 
 
-Both adjacent sibling (`+`) and general sibling (`~`) selectors have a reputation for being slow. In particular, since a general sibling selector needs to check *all* the siblings before the current node, the time to match this selector should grow quadratically with the number of nodes in total.
+Both adjacent sibling (`+`) and general sibling (`~`) selectors have a reputation for being slow. In particular, since a general sibling selector needs to check *all* the siblings before the current node, we would think that the time to match this selector would grow quadratically with the number of nodes in total.
 
-The data confirms this idea. The time to match general sibling selectors fits a linear regression model on the square of the DOM branching factor (p < 0).
+But the data says otherwise. Looking at the plot, the trend is in fact linear (p < 0).
 
 ![](report_files/figure-html/unnamed-chunk-14-1.png) 
 
-Surprisingly, adjacent sibling selectors follow a quadratic trend as well (p < 0).
+Adjacent sibling selectors follow a linear trend as well (p < 0).
 
 ![](report_files/figure-html/unnamed-chunk-15-1.png) 
 
