@@ -16,6 +16,8 @@ var erlnmyr = require('erlenmeyer');
 var types = erlnmyr.types;
 var phase = erlnmyr.phase;
 
+// Collects a sequence of data points into a CSV file, grouping them by
+// their 'eventName'.
 module.exports.amalgamate = phase({input: types.number, output: types.string, arity: 'N:1'},
   {
     onStart: function() {
@@ -62,6 +64,13 @@ function typeVar(s) { return (function(v) {
   return v[s];
 }); }
 
+// Combines the values of multiple tags into a new tag.
+//
+// For example, the code
+//
+//     mergeTags [inputs="['date', 'hostname']", spec="$1-$2.log", output="filename"];
+//
+// builds a filename from the time and host on which the experiment was run.
 module.exports.mergeTags = phase({input: typeVar('a'), output: typeVar('a'), arity: '1:1'},
   function(data, tags) {
     var inputString = this.options.inputs.map(function(input) { return tags.read(input); }).reduce(
@@ -73,12 +82,14 @@ module.exports.mergeTags = phase({input: typeVar('a'), output: typeVar('a'), ari
   },
   { inputs: [], spec: '', output: 'result' });
 
+// Adds a 'date' tag which contains the current time.
 module.exports.dateTag = phase({input: typeVar('a'), output: typeVar('a'), arity: '1:1'},
   function(data, tags) {
     tags.tag('date', Date.now());
     return data;
   });
 
+// Adds a 'hostname' tag which contains the machine's host name.
 module.exports.hostnameTag = phase({input: typeVar('a'), output: typeVar('a'), arity: '1:1'},
   function(data, tags) {
     var os=require('os');
@@ -89,6 +100,13 @@ module.exports.hostnameTag = phase({input: typeVar('a'), output: typeVar('a'), a
     return data;
   });
 
+// Parses the values of multiple tags from a single tag. This phase
+// takes the input tag, splits it by the '-' character, and assigns each
+// piece to a corresponding tag.
+//
+// The 'input' option states which tag to parse (default: 'filename').
+//
+// The 'tags' option states which tags to assign values to.
 module.exports.extractTags = erlnmyr.phase(
   {
     input: typeVar('a'),
