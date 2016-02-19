@@ -137,6 +137,7 @@ img {
 <div id="conclusions" class="section level2">
 <h2>Conclusions</h2>
 <p>These results confirm the usual advice to favor classes and IDs over more complex selectors. But the speed of descendant selectors may seem counterintuitive. According to <a href="http://calendar.perfplanet.com/2011/css-selector-performance-has-changed-for-the-better/">Sullivan (2011)</a>, optimizations such as ancestor filters and fast paths have made descendant selectors more efficient than intuition would suggest. In addition, while sibling selectors are slower than other types, their cost differs only by a constant factor; they do not have the quadratic behavior suggested by a naive implementation.</p>
+<p>Also surprising is how quickly these selectors match. The majority of cases run in well under the 100 ms instantaneous threshold, the exceptions being in pages with more than 20,000 nodes. As WebKit developer Antii Koivisto wrote in 2011, “used in moderation pretty much everything will perform just fine from the style matching perspective.”</p>
 </div>
 </div>
 
